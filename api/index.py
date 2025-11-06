@@ -3,8 +3,14 @@ import psycopg2
 from dotenv import load_dotenv
 import os
 
+
+# Fetch variables
+CONNECTION_STRING=os.getenv("COIN_STRING")
 app = Flask(__name__)
 
+def get_connection():
+    return psycopg2.connect(CONNECTION_STRING)
+    
 @app.route('/')
 def home():
     return 'Hello, World!'
@@ -13,27 +19,12 @@ def home():
 def about():
     return 'About'
 
+
 @app.route('/sensor')
 def sensor():
-    # Load environment variables from .env
-    load_dotenv()
-    
-    # Fetch variables
-    USER = os.getenv("user")
-    PASSWORD = os.getenv("password")
-    HOST = os.getenv("host")
-    PORT = os.getenv("port")
-    DBNAME = os.getenv("dbname")
-    
-    # Connect to the database
+    # ConnecT to the database
     try:
-        connection = psycopg2.connect(
-            user=USER,
-            password=PASSWORD,
-            host=HOST,
-            port=PORT,
-            dbname=DBNAME
-        )
+        connection = get_connection()
         print("Connection successful!")
         
         # Create a cursor to execute SQL queries
