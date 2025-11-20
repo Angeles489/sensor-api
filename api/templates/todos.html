@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Todos los dispositivos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+      <h1 class="text-2xl font-bold mb-4">
+        Lecturas de todos los dispositivos
+      </h1>
+
+      <table class="w-full table-auto border">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="p-2 border">Sensor</th>
+            <th class="p-2 border">Valor</th>
+            <th class="p-2 border">Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sid, val, ts in rows %}
+          <tr>
+            <td class="p-2 border">{{ sid }}</td>
+            <td class="p-2 border">{{ val }}</td>
+            <td class="p-2 border">{{ ts }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

@@ -1,38 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Sensor {{ sensor_id }} Readings</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
+    <title>Sensor {{ sensor_id }} — Lecturas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
-  <body>
-    <div class="container">
-      <h1>Sensor {{ sensor_id }} — Latest 10 Readings</h1>
 
-      <h2>📋 Data Table</h2>
-      <table>
-        <thead>
+  <body class="bg-gray-100 p-6">
+    <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+      <h1 class="text-2xl font-bold mb-4">Sensor {{ sensor_id }}</h1>
+
+      <h2 class="text-xl font-semibold mb-2">Últimas 10 lecturas</h2>
+      <table class="w-full table-auto mb-6 border">
+        <thead class="bg-gray-200">
           <tr>
-            <th>Timestamp</th>
-            <th>Value</th>
+            <th class="p-2 border">Timestamp</th>
+            <th class="p-2 border">Valor</th>
           </tr>
         </thead>
         <tbody>
           {% for value, created_at in rows %}
           <tr>
-            <td>{{ created_at }}</td>
-            <td>{{ value }}</td>
+            <td class="p-2 border">{{ created_at }}</td>
+            <td class="p-2 border">{{ value }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
 
-      <h2>📈 Graph</h2>
-      <canvas id="sensorChart"></canvas>
+      <h2 class="text-xl font-semibold mb-2">Gráfica</h2>
+      <canvas id="sensorChart" class="w-full"></canvas>
     </div>
 
     <script>
@@ -42,19 +40,13 @@
           data: {
               labels: {{ timestamps|tojson }},
               datasets: [{
-                  label: 'Sensor Value',
+                  label: 'Valor del sensor',
                   data: {{ values|tojson }},
                   borderColor: 'rgba(75, 192, 192, 1)',
                   backgroundColor: 'rgba(75, 192, 192, 0.2)',
                   tension: 0.3,
                   fill: true
               }]
-          },
-          options: {
-              scales: {
-                  x: { title: { display: true, text: 'Time' }},
-                  y: { title: { display: true, text: 'Value' }}
-              }
           }
       });
     </script>

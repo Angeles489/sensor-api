@@ -93,3 +93,48 @@ def get_sensor(sensor_id):
         if 'conn' in locals():
             conn.close()
                        
+
+@app.route("/dispositivos")
+def dispositivos():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre FROM dispositivos ORDER BY id")
+    rows = cur.fetchall()
+    conn.close()
+    return render_template("dispositivos.html", dispositivos=rows)
+
+@app.route("/vista/<device_id>")
+def vista_dispositivo(device_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    if device_id == "all":
+        cur.execute("""
+            SELECT sensor_id, value, created_at
+            FROM sensores
+            ORDER BY created_at DESC
+            LIMIT 50;
+        """)
+        rows = cur.fetchall()
+        conn.close()
+        return render_template("todos.html", rows=rows)
+
+    # solo un dispositivo
+    cur.execute("""
+        SELECT value, created_at
+        FROM sensores
+        WHERE sensor_id = %s
+        ORDER BY created_at DESC
+        LIMIT 10;
+    """, (device_id,))
+    rows = cur.fetchall()
+    conn.close()
+
+    values = [r[0] for r in rows][::-1]
+    timestamps = [r[1].strftime('%Y-%m-%d %H:%M:%S') for r in rows][::-1]
+
+    return render_template("sensor.html",
+                           sensor_id=device_id,
+                           values=values,
+                           timestamps=timestamps,
+                           rows=rows)

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dispositivos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-gray-100 p-6">
+    <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+      <h1 class="text-2xl font-bold mb-4">Seleccionar dispositivo</h1>
+
+      <select
+        id="device-select"
+        class="w-full p-2 border rounded"
+        onchange="goToDevice()"
+      >
+        <option value="">-- Selecciona un dispositivo --</option>
+        {% for id, nombre in dispositivos %}
+        <option value="{{ id }}">{{ nombre }}</option>
+        {% endfor %}
+        <option value="all">Todos</option>
+      </select>
+    </div>
+
+    <script>
+      function goToDevice() {
+        const id = document.getElementById("device-select").value;
+        if (id) window.location.href = "/vista/" + id;
+      }
+    </script>
+  </body>
+</html>
