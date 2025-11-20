@@ -11,7 +11,6 @@
     <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow">
       <h1 class="text-3xl font-bold mb-6">Dashboard de Sensores</h1>
 
-      <!-- DROPDOWN -->
       <div class="mb-6">
         <label class="block font-semibold mb-2">Seleccionar sensor:</label>
 
@@ -25,8 +24,7 @@
       </div>
 
       <div id="sensor-content" class="hidden">
-        <!-- TABLA -->
-        <h2 class="text-xl font-semibold mb-2">Últimas 10 lecturas</h2>
+        <h2 class="text-xl font-semibold mb-2">Últimas lecturas</h2>
 
         <table class="w-full table-auto mb-6 border" id="table-readings">
           <thead class="bg-gray-200">
@@ -38,7 +36,6 @@
           <tbody></tbody>
         </table>
 
-        <!-- GRAFICA -->
         <h2 class="text-xl font-semibold mb-2">Gráfica</h2>
         <canvas id="sensorChart"></canvas>
       </div>
@@ -47,7 +44,6 @@
     <script>
       let chart = null;
 
-      // Cuando cambia el dropdown
       document
         .getElementById("sensor-select")
         .addEventListener("change", async () => {
@@ -58,35 +54,30 @@
             return;
           }
 
-          // Obtener datos del backend
           const res = await fetch(`/api/dashboard/${sensorId}`);
           const data = await res.json();
 
-          // Mostrar contenedor
           document.getElementById("sensor-content").classList.remove("hidden");
 
-          // Actualizar tabla
           const tbody = document.querySelector("#table-readings tbody");
           tbody.innerHTML = "";
           data.rows.forEach((row) => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-          <td class="p-2 border">${row.created_at}</td>
-          <td class="p-2 border">${row.value}</td>
-        `;
+            <td class="p-2 border">${row.created_at}</td>
+            <td class="p-2 border">${row.value}</td>
+          `;
             tbody.appendChild(tr);
           });
 
-          // Actualizar gráfica
           const ctx = document.getElementById("sensorChart");
-
           if (chart) chart.destroy();
 
           chart = new Chart(ctx, {
             type: "line",
             data: {
               labels: data.timestamps,
-              datasets: data.datasets, // <-- usar datasets del backend
+              datasets: data.datasets,
             },
           });
         });
