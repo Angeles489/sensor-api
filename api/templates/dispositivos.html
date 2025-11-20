@@ -18,9 +18,9 @@
         <select id="sensor-select" class="p-2 border rounded w-full">
           <option value="">-- Selecciona un sensor --</option>
           {% for id, nombre in dispositivos %}
-          <option value="{{ id }}">{{ nombre }}</option>
+            <option value="{{ id }}">{{ nombre }}</option>
           {% endfor %}
-        </select>
+          <option value="all">Todos</option>
       </div>
 
       <div id="sensor-content" class="hidden">

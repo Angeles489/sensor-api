@@ -210,6 +210,6 @@ def api_dashboard(sensor_id):
             "data": values,
             "borderWidth": 2,
             "tension": 0.3,
-            "fill": True
+            "fill": true
         }]
     })
