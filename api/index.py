@@ -40,7 +40,7 @@ def insert_sensor_value(sensor_id):
     finally:
         if "conn" in locals():
             conn.close()
-            
+
 @app.route("/api/dashboard/<sensor_id>")
 def api_dashboard(sensor_id):
     conn = get_connection()
@@ -90,11 +90,12 @@ def api_dashboard(sensor_id):
         })
 
     cur.execute("""
-        SELECT value, created_at
-        FROM sensores
-        WHERE sensor_id = %s
-        ORDER BY created_at DESC
-        LIMIT 10;
+    SELECT d.nombre, s.value, s.created_at
+    FROM sensores s
+    JOIN dispositivos d ON s.sensor_id = d.id
+    WHERE sensor_id = %s
+    ORDER BY s.created_at DESC
+    LIMIT 10;
     """, (sensor_id,))
     rows = cur.fetchall()
     conn.close()
@@ -106,8 +107,9 @@ def api_dashboard(sensor_id):
         "rows": [
             {
                 "sensor_id": sensor_id,
-                "value": r[0],
-                "created_at": r[1].strftime('%Y-%m-%d %H:%M:%S')
+                "sensor_name": r[0],
+                "value": r[1],
+                "created_at": r[2].strftime('%Y-%m-%d %H:%M:%S')
             }
             for r in rows
         ],
