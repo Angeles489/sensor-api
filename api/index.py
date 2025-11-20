@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import psycopg2
 from dotenv import load_dotenv
 import os
@@ -186,7 +186,26 @@ def api_device_history(sensor_id):
 
 @app.route("/dashboard")
 def dashboard():
-    return app.send_static_file("index.html")
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT sensor_id, value, created_at
+            FROM sensores
+            ORDER BY created_at DESC
+            LIMIT 50;
+        """)
+        rows = cur.fetchall()
+
+        return render_template("index.html", rows=rows)
+
+    except Exception as e:
+        return f"Error: {e}"
+
+    finally:
+        if "conn" in locals():
+            conn.close()
 
 
 # ---------------------------
