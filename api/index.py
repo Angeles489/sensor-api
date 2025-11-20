@@ -138,12 +138,53 @@ def vista_dispositivo(device_id):
                            values=values,
                            timestamps=timestamps,
                            rows=rows)
-
-@app.route("/api/sensor/<int:sensor_id>")
-def api_sensor(sensor_id):
+@app.route("/api/dashboard/<sensor_id>")
+def api_dashboard(sensor_id):
     conn = get_connection()
     cur = conn.cursor()
 
+    # ------ TODOS ------
+    if sensor_id == "all":
+        cur.execute("""
+            SELECT sensor_id, value, created_at
+            FROM sensores
+            ORDER BY created_at DESC
+            LIMIT 100;
+        """)
+        rows = cur.fetchall()
+
+        # Organizar por sensor
+        sensores = {}
+        for sid, val, ts in rows:
+            sensores.setdefault(sid, []).append((ts, val))
+
+        # Convertir a datasets para Chart.js
+        datasets = []
+        for sid, items in sensores.items():
+            items = sorted(items)  # orden por tiempo
+
+            datasets.append({
+                "label": f"Sensor {sid}",
+                "data": [v for (_, v) in items],
+                "tension": 0.3,
+                "borderWidth": 2,
+                "fill": False
+            })
+
+        timestamps = sorted(list({ts for groups in sensores.values() for (ts, _) in groups}))
+        timestamps = [t.strftime('%Y-%m-%d %H:%M:%S') for t in timestamps]
+
+        conn.close()
+        return jsonify({
+            "rows": [
+                {"sensor_id": sid, "value": val, "created_at": ts.strftime('%Y-%m-%d %H:%M:%S')}
+                for sid, val, ts in rows
+            ],
+            "timestamps": timestamps,
+            "datasets": datasets
+        })
+
+    # ------ UN SOLO SENSOR ------
     cur.execute("""
         SELECT value, created_at
         FROM sensores
@@ -155,8 +196,20 @@ def api_sensor(sensor_id):
     rows = cur.fetchall()
     conn.close()
 
+    values = [r[0] for r in rows][::-1]
+    timestamps = [r[1].strftime('%Y-%m-%d %H:%M:%S') for r in rows][::-1]
+
     return jsonify({
-        "values": [r[0] for r in rows][::-1],
-        "timestamps": [r[1].strftime('%Y-%m-%d %H:%M:%S') for r in rows][::-1],
-        "rows": [{"value": r[0], "created_at": r[1].strftime('%Y-%m-%d %H:%M:%S')} for r in rows]
+        "rows": [
+            {"sensor_id": sensor_id, "value": r[0], "created_at": r[1].strftime('%Y-%m-%d %H:%M:%S')}
+            for r in rows
+        ],
+        "timestamps": timestamps,
+        "datasets": [{
+            "label": f"Sensor {sensor_id}",
+            "data": values,
+            "borderWidth": 2,
+            "tension": 0.3,
+            "fill": True
+        }]
     })

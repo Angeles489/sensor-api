@@ -2,34 +2,94 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Todos los dispositivos</title>
+    <title>Dashboard Sensores</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body class="bg-gray-100 p-6">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-      <h1 class="text-2xl font-bold mb-4">
-        Lecturas de todos los dispositivos
-      </h1>
+    <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+      <h1 class="text-3xl font-bold mb-6">Dashboard de Sensores</h1>
 
-      <table class="w-full table-auto border">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="p-2 border">Sensor</th>
-            <th class="p-2 border">Valor</th>
-            <th class="p-2 border">Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for sid, val, ts in rows %}
-          <tr>
-            <td class="p-2 border">{{ sid }}</td>
-            <td class="p-2 border">{{ val }}</td>
-            <td class="p-2 border">{{ ts }}</td>
-          </tr>
+      <!-- DROPDOWN -->
+      <div class="mb-6">
+        <label class="block font-semibold mb-2">Seleccionar sensor:</label>
+
+        <select id="sensor-select" class="p-2 border rounded w-full">
+          <option value="">-- Selecciona un sensor --</option>
+
+          {% for id, nombre in dispositivos %}
+          <option value="{{ id }}">{{ nombre }}</option>
           {% endfor %}
-        </tbody>
-      </table>
+
+          <option value="all">Todos</option>
+        </select>
+      </div>
+
+      <div id="sensor-content" class="hidden">
+        <h2 class="text-xl font-semibold mb-2">Lecturas</h2>
+        <table class="w-full table-auto mb-6 border" id="table-readings">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="p-2 border">Sensor</th>
+              <th class="p-2 border">Valor</th>
+              <th class="p-2 border">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <h2 class="text-xl font-semibold mb-2">Gráfica</h2>
+        <canvas id="sensorChart"></canvas>
+      </div>
     </div>
+
+    <script>
+      let chart = null;
+
+      document
+        .getElementById("sensor-select")
+        .addEventListener("change", async () => {
+          const sensorId = document.getElementById("sensor-select").value;
+
+          if (!sensorId) {
+            document.getElementById("sensor-content").classList.add("hidden");
+            return;
+          }
+
+          // Llamada al backend
+          const res = await fetch(`/api/dashboard/${sensorId}`);
+          const data = await res.json();
+
+          document.getElementById("sensor-content").classList.remove("hidden");
+
+          // --- TABLA ---
+          const tbody = document.querySelector("#table-readings tbody");
+          tbody.innerHTML = "";
+
+          data.rows.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+          <td class="p-2 border">${r.sensor_id}</td>
+          <td class="p-2 border">${r.value}</td>
+          <td class="p-2 border">${r.created_at}</td>
+        `;
+            tbody.appendChild(tr);
+          });
+
+          // --- GRAFICA ---
+          if (chart) chart.destroy();
+
+          const ctx = document.getElementById("sensorChart");
+
+          chart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: data.timestamps,
+              datasets: data.datasets, // viene listo desde Flask
+            },
+          });
+        });
+    </script>
   </body>
 </html>
