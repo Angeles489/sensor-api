@@ -7,20 +7,22 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
-  <body class="bg-[#eef1f7] min-h-screen p-4 flex justify-center">
+  <body class="bg-[#0e0f11] min-h-screen p-4 flex justify-center text-gray-200">
     <div class="w-full max-w-6xl">
-      <h1 class="text-4xl font-bold text-gray-800 mb-10">Dashboard Sensores</h1>
+      <h1 class="text-4xl font-bold text-white mb-10">Dashboard Sensores</h1>
 
+      <!-- SELECTOR + TARJETAS -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <!-- Selector -->
         <div
-          class="bg-white p-6 rounded-3xl shadow-lg border border-gray-200 col-span-1"
+          class="bg-[#1a1b1f] p-6 rounded-3xl shadow-lg border border-gray-700"
         >
-          <label class="block text-lg font-semibold text-gray-700 mb-3">
+          <label class="block text-lg font-semibold mb-3">
             Selecciona un sensor
           </label>
           <select
             id="sensor-select"
-            class="p-3 rounded-xl border w-full bg-gray-50 focus:ring-2 focus:ring-purple-500"
+            class="p-3 rounded-xl border w-full bg-[#2a2b31] border-gray-600 text-gray-200 focus:ring-2 focus:ring-purple-500"
           >
             <option value="">-- Selecciona un sensor --</option>
             {% for id, nombre in dispositivos %}
@@ -30,49 +32,55 @@
           </select>
         </div>
 
+        <!-- Promedio -->
         <div
-          class="bg-gradient-to-br from-purple-500 to-indigo-500 p-6 rounded-3xl shadow-xl text-white flex items-center justify-center"
+          class="bg-gradient-to-br from-purple-700 to-indigo-800 p-6 rounded-3xl shadow-xl text-white flex items-center justify-center"
         >
           <div class="text-center">
-            <p class="text-xl font-semibold">Promedio</p>
+            <p class="text-lg font-semibold">Promedio</p>
             <p id="avg-card" class="text-4xl font-bold mt-2">--</p>
           </div>
         </div>
 
-        <!-- Tarjeta métrica 2 -->
+        <!-- Último valor -->
         <div
-          class="bg-gradient-to-br from-pink-400 to-red-400 p-6 rounded-3xl shadow-xl text-white flex items-center justify-center"
+          class="bg-gradient-to-br from-pink-700 to-red-700 p-6 rounded-3xl shadow-xl text-white flex items-center justify-center"
         >
           <div class="text-center">
-            <p class="text-xl font-semibold">Último valor</p>
+            <p class="text-lg font-semibold">Último valor</p>
             <p id="last-card" class="text-4xl font-bold mt-2">--</p>
           </div>
         </div>
       </div>
 
-      <!-- CONTENIDO (Tabla + Gráfica) -->
+      <!-- CONTENIDO -->
       <div id="sensor-content" class="hidden space-y-10">
         <!-- Tabla -->
-        <div class="bg-white p-6 rounded-3xl shadow-lg border border-gray-200">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+        <div
+          class="bg-[#1a1b1f] p-6 rounded-3xl shadow-lg border border-gray-700"
+        >
+          <h2 class="text-2xl font-semibold text-white mb-4">
             Últimas lecturas
           </h2>
-          <table class="w-full table-auto mb-4">
-            <thead class="bg-gray-100 text-gray-700">
+          <table class="w-full table-auto mb-4 text-gray-300">
+            <thead class="bg-[#2a2b31] text-gray-300">
               <tr>
                 <th class="p-3 text-left">Timestamp</th>
                 <th class="p-3 text-left">Valor</th>
               </tr>
             </thead>
-            <tbody id="table-readings" class="text-gray-600"></tbody>
+            <tbody id="table-readings" class="text-gray-400"></tbody>
           </table>
         </div>
 
+        <!-- Gráfica -->
         <div
-          class="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-3xl shadow-2xl text-white"
+          class="bg-gradient-to-br from-purple-800 to-pink-800 p-6 rounded-3xl shadow-2xl text-white"
         >
           <h2 class="text-2xl font-semibold mb-4">Gráfica</h2>
-          <div class="bg-white p-4 rounded-xl shadow-md">
+          <div
+            class="bg-[#1a1b1f] p-4 rounded-xl shadow-md border border-gray-700"
+          >
             <canvas id="sensorChart"></canvas>
           </div>
         </div>
@@ -97,28 +105,26 @@
 
           document.getElementById("sensor-content").classList.remove("hidden");
 
-          /* ---- Actualizar tarjetas ---- */
           const valores = data.rows.map((r) => r.value);
           const avg = valores.length
             ? (valores.reduce((a, b) => a + b, 0) / valores.length).toFixed(2)
             : "--";
+
           document.getElementById("avg-card").textContent = avg;
           document.getElementById("last-card").textContent =
             valores[valores.length - 1] ?? "--";
 
-          /* ---- Tabla ---- */
           const tbody = document.querySelector("#table-readings");
           tbody.innerHTML = "";
           data.rows.forEach((row) => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-              <td class="p-3 border-b">${row.created_at}</td>
-              <td class="p-3 border-b">${row.value}</td>
+              <td class="p-3 border-b border-gray-700">${row.created_at}</td>
+              <td class="p-3 border-b border-gray-700">${row.value}</td>
             `;
             tbody.appendChild(tr);
           });
 
-          /* ---- Gráfica ---- */
           const ctx = document.getElementById("sensorChart");
           if (chart) chart.destroy();
 
@@ -130,10 +136,10 @@
             },
             options: {
               responsive: true,
-              plugins: { legend: { labels: { color: "#000" } } },
+              plugins: { legend: { labels: { color: "#fff" } } },
               scales: {
-                x: { ticks: { color: "#000" } },
-                y: { ticks: { color: "#000" } },
+                x: { ticks: { color: "#ccc" } },
+                y: { ticks: { color: "#ccc" } },
               },
             },
           });
