@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard IoT Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto">
+      <header class="mb-8 p-4 bg-white shadow-lg rounded-xl">
+        <h1 class="text-3xl font-extrabold text-indigo-800">
+          Panel de Control de Dispositivos IoT
+        </h1>
+        <p class="text-gray-600 mt-1">
+          Selecciona un dispositivo para visualizar sus datos.
+        </p>
+      </header>
+
+      <!-- Selector -->
+      <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">
+          Filtro de Dispositivo
+        </h2>
+
+        <form class="flex flex-col sm:flex-row gap-4 items-end" id="deviceForm">
+          <div class="flex-grow w-full sm:w-auto">
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Selecciona el ID</label
+            >
+
+            <select
+              id="device_selector"
+              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-lg shadow-sm border"
+            >
+              <option value="Todos">Todos los dispositivos</option>
+            </select>
+          </div>
+
+          <button
+            id="loadButton"
+            type="submit"
+            class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md"
+          >
+            Mostrar Datos
+          </button>
+        </form>
+      </div>
+
+      <!-- Contenedor donde se insertarán las cards -->
+      <section id="deviceCards" class="mt-8"></section>
+
+      <!-- Contenedor del grafico -->
+      <div
+        id="historicalChartContainer"
+        class="hidden bg-white p-6 rounded-xl shadow-lg mb-8"
+      >
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">
+          Gráfico Histórico
+        </h2>
+        <canvas id="sensorChart" class="w-full h-96"></canvas>
+      </div>
+
+      <!-- Tabla histórica -->
+      <div
+        id="historyTableContainer"
+        class="hidden bg-white p-6 rounded-xl shadow-lg"
+      >
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">
+          Tabla Histórica
+        </h2>
+        <table class="min-w-full divide-y divide-gray-200" id="historyTable">
+          <thead class="bg-indigo-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+              >
+                Timestamp
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+              >
+                Valor
+              </th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      // ------- EJEMPLO DE ENDPOINTS -------
+      // GET /api/devices → lista de IDs
+      // GET /api/devices/<id> → datos en vivo
+      // GET /api/devices/<id>/history → datos históricos
+      // -------------------------------------
+
+      // --- Cargar IDs en el selector ---
+      async function loadDeviceIDs() {
+        let selector = document.getElementById("device_selector");
+        selector.innerHTML = `<option value="Todos">Todos los dispositivos</option>`;
+
+        let ids = await fetch("/api/devices").then((r) => r.json());
+
+        ids.forEach((id) => {
+          let opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = "Dispositivo " + id;
+          selector.appendChild(opt);
+        });
+      }
+
+      // --- Manejar click en "Mostrar Datos" ---
+      document
+        .getElementById("deviceForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          let id = document.getElementById("device_selector").value;
+
+          if (id === "Todos") {
+            loadAllDevices();
+          } else {
+            loadSingleDevice(id);
+          }
+        });
+
+      // --- Cargar datos de todos ---
+      async function loadAllDevices() {
+        let container = document.getElementById("deviceCards");
+        container.innerHTML = "";
+
+        let data = await fetch("/api/devices/data").then((r) => r.json());
+
+        data.forEach((device) => {
+          container.innerHTML += deviceCard(device);
+        });
+
+        hideHistorical();
+      }
+
+      // --- Cargar datos de un dispositivo ---
+      async function loadSingleDevice(id) {
+        let container = document.getElementById("deviceCards");
+        container.innerHTML = "";
+
+        let device = await fetch(`/api/devices/${id}`).then((r) => r.json());
+        container.innerHTML = deviceCard(device);
+
+        let history = await fetch(`/api/devices/${id}/history`).then((r) =>
+          r.json()
+        );
+
+        loadChart(history);
+        loadTable(history);
+      }
+
+      // --- HTML dinámico para cada card ---
+      function deviceCard(device) {
+        return `
+    <div class="bg-white p-6 rounded-xl shadow-xl border-t-4 border-indigo-500 mb-6">
+        <h3 class="text-xl font-bold text-indigo-700 mb-3">${
+          device.name ?? "Sin nombre"
+        }</h3>
+        <p><b>ID:</b> ${device.id}</p>
+        <p class="text-3xl font-extrabold text-green-600 mt-2">${
+          device.value
+        } <span class="text-xl">${device.unit ?? ""}</span></p>
+        <p class="text-xs text-gray-500 mt-4">Última actualización: ${
+          device.timestamp
+        }</p>
+    </div>`;
+      }
+
+      // --- Cargar gráfico ---
+      let chartInstance = null;
+
+      function loadChart(history) {
+        let container = document.getElementById("historicalChartContainer");
+        container.classList.remove("hidden");
+
+        let ctx = document.getElementById("sensorChart");
+
+        let labels = history.map((r) => r.timestamp);
+        let values = history.map((r) => r.value);
+
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Valor",
+                data: values,
+              },
+            ],
+          },
+        });
+      }
+
+      // --- Cargar tabla ---
+      function loadTable(history) {
+        let container = document.getElementById("historyTableContainer");
+        container.classList.remove("hidden");
+
+        let tbody = document.querySelector("#historyTable tbody");
+        tbody.innerHTML = "";
+
+        history.forEach((r) => {
+          tbody.innerHTML += `
+        <tr>
+            <td class="px-6 py-3">${r.timestamp}</td>
+            <td class="px-6 py-3 font-bold text-green-700">${r.value}</td>
+        </tr>`;
+        });
+      }
+
+      function hideHistorical() {
+        document
+          .getElementById("historicalChartContainer")
+          .classList.add("hidden");
+        document
+          .getElementById("historyTableContainer")
+          .classList.add("hidden");
+      }
+
+      loadDeviceIDs();
+    </script>
+  </body>
+</html>
