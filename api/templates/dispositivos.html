@@ -2,32 +2,102 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Dispositivos</title>
+    <title>Dashboard Sensores</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body class="bg-gray-100 p-6">
-    <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
-      <h1 class="text-2xl font-bold mb-4">Seleccionar dispositivo</h1>
+    <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow">
+      <h1 class="text-3xl font-bold mb-6">Dashboard de Sensores</h1>
 
-      <select
-        id="device-select"
-        class="w-full p-2 border rounded"
-        onchange="goToDevice()"
-      >
-        <option value="">-- Selecciona un dispositivo --</option>
-        {% for id, nombre in dispositivos %}
-        <option value="{{ id }}">{{ nombre }}</option>
-        {% endfor %}
-        <option value="all">Todos</option>
-      </select>
+      <!-- DROPDOWN -->
+      <div class="mb-6">
+        <label class="block font-semibold mb-2">Seleccionar sensor:</label>
+
+        <select id="sensor-select" class="p-2 border rounded w-full">
+          <option value="">-- Selecciona un sensor --</option>
+          {% for id, nombre in dispositivos %}
+          <option value="{{ id }}">{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div id="sensor-content" class="hidden">
+        <!-- TABLA -->
+        <h2 class="text-xl font-semibold mb-2">Últimas 10 lecturas</h2>
+
+        <table class="w-full table-auto mb-6 border" id="table-readings">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="p-2 border">Timestamp</th>
+              <th class="p-2 border">Valor</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <!-- GRAFICA -->
+        <h2 class="text-xl font-semibold mb-2">Gráfica</h2>
+        <canvas id="sensorChart"></canvas>
+      </div>
     </div>
 
     <script>
-      function goToDevice() {
-        const id = document.getElementById("device-select").value;
-        if (id) window.location.href = "/vista/" + id;
-      }
+      let chart = null;
+
+      // Cuando cambia el dropdown
+      document
+        .getElementById("sensor-select")
+        .addEventListener("change", async () => {
+          const sensorId = document.getElementById("sensor-select").value;
+
+          if (!sensorId) {
+            document.getElementById("sensor-content").classList.add("hidden");
+            return;
+          }
+
+          // Obtener datos del backend
+          const res = await fetch(`/api/sensor/${sensorId}`);
+          const data = await res.json();
+
+          // Mostrar contenedor
+          document.getElementById("sensor-content").classList.remove("hidden");
+
+          // Actualizar tabla
+          const tbody = document.querySelector("#table-readings tbody");
+          tbody.innerHTML = "";
+          data.rows.forEach((row) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+          <td class="p-2 border">${row.created_at}</td>
+          <td class="p-2 border">${row.value}</td>
+        `;
+            tbody.appendChild(tr);
+          });
+
+          // Actualizar gráfica
+          const ctx = document.getElementById("sensorChart");
+
+          if (chart) chart.destroy();
+
+          chart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: data.timestamps,
+              datasets: [
+                {
+                  label: "Valor del sensor",
+                  data: data.values,
+                  borderColor: "rgba(75, 192, 192, 1)",
+                  backgroundColor: "rgba(75, 192, 192, 0.2)",
+                  tension: 0.3,
+                  fill: true,
+                },
+              ],
+            },
+          });
+        });
     </script>
   </body>
 </html>

@@ -138,3 +138,25 @@ def vista_dispositivo(device_id):
                            values=values,
                            timestamps=timestamps,
                            rows=rows)
+
+@app.route("/api/sensor/<int:sensor_id>")
+def api_sensor(sensor_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT value, created_at
+        FROM sensores
+        WHERE sensor_id = %s
+        ORDER BY created_at DESC
+        LIMIT 10;
+    """, (sensor_id,))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return jsonify({
+        "values": [r[0] for r in rows][::-1],
+        "timestamps": [r[1].strftime('%Y-%m-%d %H:%M:%S') for r in rows][::-1],
+        "rows": [{"value": r[0], "created_at": r[1].strftime('%Y-%m-%d %H:%M:%S')} for r in rows]
+    })
