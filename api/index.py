@@ -9,8 +9,13 @@ def get_connection():
     return psycopg2.connect(CONNECTION_STRING)
 
 @app.route("/")
-def home():
-    return "Hello, World!"
+def dispositivos():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre FROM dispositivos ORDER BY id")
+    rows = cur.fetchall()
+    conn.close()
+    return render_template("dashboard.html", dispositivos=rows)
 
 @app.route("/sensor/<int:sensor_id>", methods=["POST"])
 def insert_sensor_value(sensor_id):
@@ -35,15 +40,6 @@ def insert_sensor_value(sensor_id):
     finally:
         if "conn" in locals():
             conn.close()
-
-@app.route("/dispositivos")
-def dispositivos():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, nombre FROM dispositivos ORDER BY id")
-    rows = cur.fetchall()
-    conn.close()
-    return render_template("dispositivos.html", dispositivos=rows)
 
 @app.route("/api/dashboard/<sensor_id>")
 def api_dashboard(sensor_id):
