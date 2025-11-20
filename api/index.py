@@ -138,6 +138,7 @@ def vista_dispositivo(device_id):
                            values=values,
                            timestamps=timestamps,
                            rows=rows)
+
 @app.route("/api/dashboard/<sensor_id>")
 def api_dashboard(sensor_id):
     conn = get_connection()
@@ -210,6 +211,6 @@ def api_dashboard(sensor_id):
             "data": values,
             "borderWidth": 2,
             "tension": 0.3,
-            "fill": true
+            "fill": True
         }]
     })
