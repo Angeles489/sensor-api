@@ -86,16 +86,7 @@
             type: "line",
             data: {
               labels: data.timestamps,
-              datasets: [
-                {
-                  label: "Valor del sensor",
-                  data: data.values,
-                  borderColor: "rgba(75, 192, 192, 1)",
-                  backgroundColor: "rgba(75, 192, 192, 0.2)",
-                  tension: 0.3,
-                  fill: true,
-                },
-              ],
+              datasets: data.datasets, // <-- usar datasets del backend
             },
           });
         });
