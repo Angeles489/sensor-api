@@ -100,8 +100,8 @@ def api_dashboard(sensor_id):
     rows = cur.fetchall()
     conn.close()
 
-    values = [r[0] for r in rows][::-1]
-    timestamps = [r[1].strftime('%Y-%m-%d %H:%M:%S') for r in rows][::-1]
+    values = [r[1] for r in rows][::-1]
+    timestamps = [r[2].strftime('%Y-%m-%d %H:%M:%S') for r in rows][::-1]
 
     return jsonify({
         "rows": [
@@ -122,3 +122,4 @@ def api_dashboard(sensor_id):
             "fill": True
         }]
     })
+
